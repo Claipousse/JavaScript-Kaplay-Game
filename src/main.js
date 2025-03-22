@@ -1,45 +1,69 @@
 import kaplay from "kaplay";
 
 kaplay({
-    font: "daydream",
+    width: 2000,
+    height: 2000,
+    font: "sproutland",
 });
 
-loadSprite("kat", "sprites/kat.png");
-loadSprite("skull", "sprites/skuller.png");
-loadSprite("kaboom", "sprites/kaboom.png");
-loadSprite("gun", "sprites/gun.png");
+//Sprites
+loadSprite("kat", "sprites/kat.png"); //Sprite of the player
+loadSprite("skull", "sprites/skuller.png"); //Sprite of the enemy
+loadSprite("kaboom", "sprites/kaboom.png"); //Sprite when taking damage
+loadSprite("gun", "sprites/gun.png"); //Sprite of the gun
+//Sounds
 loadSound("explosion", "sounds/explosion.mp3");
-loadFont("daydream", "fonts/Daydream.ttf");
-
-const speed = 500;
-const enemySpeed = 200;
-let maxHP = 3;
-let playerHP = maxHP;
-let enemyDamage = 1;
+loadSound("player_hurt", "sounds/player_hurt.mp3");
+loadSound("skull_death", "sounds/skull_death.mp3");
+//Fonts
+loadFont("sproutland", "fonts/sproutLands.ttf");
+ 
+//Game settings (which doesn't scale)
 let canTakeDamage = true;
-let shootCooldown = 2;
+let isDead = false;
+let waveActive = false;
 let lastShotTime = 0;
-let weaponRange = 500;
 
-setLayers(["background", "game", "ui"], "game");
+//Game & enemies settings (which scales)
+let enemySpeed = 200;
+let enemyDamage = 1;
+let waveDuration = 30;
+let enemySpawnRate = 2;
 
+//Stats that can be upgradables
+let speed = 500;
+let maxHP = 3;
+let playerHP = maxHP; //Game setting, cannot be on top or will cause error
+let shootCooldown = 2;
+let weaponRange = 300;
+
+setLayers(["background", 
+    "playground", 
+    "game", 
+    "ui"
+], "game");
+
+//Game Over scene
 scene("gameover", () => {
-    add([rect(width(), height()), color(0, 0, 0), layer("background")]);
+    add([rect(width(), height()), color(0, 0, 0), layer("playground")]);
 
     add([
-        text("Game Over", { size: 48, width: width() }),
-        pos(width() / 2, height() / 3),
+        text("Game Over", { size: 48}),
+        pos(width() / 2, height() / 5),
+        anchor("center"),
         layer("ui"),
     ]);
 
     add([
-        text("Press R to Restart", { size: 24, width: width() }),
-        pos(width() / 2, height() / 2),
+        text("Press R to Restart", { size: 24}),
+        pos(width() / 2, height() / 4),
+        anchor("center"),
         layer("ui"),
     ]);
 
     onKeyPress("r", () => {
         playerHP = maxHP;
+        isDead = false;
         go("game");
     });
 });
@@ -54,21 +78,40 @@ scene("game", () => {
         "player",
     ]);
 
-    const skull = add([
-        sprite("skull"),
-        pos(50, 50),
-        area(),
-        body(),
-        layer("game"),
-        "enemy",
-    ]);
-
     const gun = add([
         sprite("gun"),
         pos(kat.pos.x + 30, kat.pos.y),
         layer("game"),
         "gun",
     ]);
+
+    function spawnEnemy() {
+        let spawnPos;
+        do {
+            spawnPos = vec2(rand(0, width()), rand(0, height()));
+        } while (kat.pos.dist(spawnPos) < 500);
+        
+        add([
+            sprite("skull"),
+            pos(spawnPos),
+            area(),
+            body(),
+            layer("game"),
+            "enemy",
+        ]);
+    }
+
+    function startWave() {
+        waveActive = true;
+        loop(enemySpawnRate, () => {
+            if (waveActive) spawnEnemy();
+        });
+        wait(waveDuration, () => {
+            waveActive = false;
+        });
+    }
+
+    startWave();
 
     function getClosestEnemy() {
         const enemies = get("enemy");
@@ -85,7 +128,8 @@ scene("game", () => {
         return closestEnemy;
     }
 
-    add([rect(width(), height()), color(0, 0, 200), layer("background")]);
+    add([rect(width(), height()), color(0, 0, 0), layer("background"), fixed()]); //Background of the playground, nobody can go there
+    add([rect(width(), height()), color(0, 0, 200), layer("playground")]); //Playground of the game, player and enemies move there
 
     const hpBarContainer = add([
         rect(200, 20),
@@ -104,7 +148,7 @@ scene("game", () => {
     ]);
 
     const hpText = add([
-        text(`${playerHP} / ${maxHP}`, { size: 12 }),
+        text(`${playerHP} / ${maxHP}`, { size: 18 }),
         pos(100, 20),
         layer("ui"),
         fixed(),
@@ -121,9 +165,11 @@ scene("game", () => {
             updateHPBar();
             addKaboom(kat.pos);
             shake();
-            play("explosion");
+            play("player_hurt");
+            flash("#cc425e", 0.2);
 
             if (playerHP <= 0) {
+                isDead = true;
                 destroy(kat);
                 destroy(gun);
                 addKaboom(kat.pos);
@@ -135,76 +181,68 @@ scene("game", () => {
         }
     });
 
-    onKeyDown("left", () => kat.move(-speed, 0));
-    onKeyDown("right", () => kat.move(speed, 0));
-    onKeyDown("up", () => kat.move(0, -speed));
-    onKeyDown("down", () => kat.move(0, speed));
+    onKeyDown("left", () => { if (!isDead) kat.move(-speed, 0); });
+    onKeyDown("right", () => { if (!isDead) kat.move(speed, 0); });
+    onKeyDown("up", () => { if (!isDead) kat.move(0, -speed); });
+    onKeyDown("down", () => { if (!isDead) kat.move(0, speed); });
+
 
     onUpdate(() => {
         const closestEnemy = getClosestEnemy();
         const currentTime = time();
-
-        const direction = kat.pos.x < width() / 2 ? vec2(-1, 0) : vec2(1, 0);
-        gun.pos = kat.pos.add(direction.scale(30));
-
+    
         if (closestEnemy) {
             const dist = kat.pos.dist(closestEnemy.pos);
             const direction = closestEnemy.pos.sub(kat.pos).unit();
             const angle = Math.atan2(direction.y, direction.x) * (180 / Math.PI);
-
-            if (dist <= weaponRange) {
-                gun.pos = kat.pos.add(direction.scale(30));
-                gun.angle = angle;
-
-                if (currentTime - lastShotTime >= shootCooldown) {
-                    const bullet = add([
-                        rect(10, 5),
-                        pos(gun.pos),
-                        color(255, 0, 0),
-                        layer("game"),
-                        "bullet",
-                        area(),
-                        {
-                            speed: 1000,
-                            dir: direction,
-                        },
-                    ]);
-
-                    bullet.onUpdate(() => {
-                        bullet.move(bullet.dir.scale(bullet.speed));
-                    });
-
-                    bullet.onCollide("enemy", (enemy) => {
-                        destroy(bullet);
-                        destroy(enemy);
-                        addKaboom(enemy.pos);
-                        play("explosion");
-                    });
-
-                    lastShotTime = currentTime;
-                }
+            
+            gun.pos = kat.pos.add(direction.scale(35)).add(vec2(30, 30));
+            gun.angle = angle;
+    
+            if (dist <= weaponRange && currentTime - lastShotTime >= shootCooldown) {
+                const bullet = add([
+                    rect(10, 5),
+                    pos(gun.pos),
+                    color(255, 0, 0),
+                    layer("game"),
+                    "bullet",
+                    area(),
+                    {
+                        speed: 1000,
+                        dir: direction,
+                    },
+                ]);
+    
+                bullet.onUpdate(() => {
+                    bullet.move(bullet.dir.scale(bullet.speed));
+                });
+    
+                bullet.onCollide("enemy", (enemy) => {
+                    destroy(bullet);
+                    destroy(enemy);
+                    play("skull_death");
+                });
+    
+                lastShotTime = currentTime;
             }
         } else {
-            const direction = kat.pos.x < width() / 2 ? vec2(-1, 0) : vec2(1, 0);
+            gun.pos = kat.pos.add(vec2(30, 0));
             gun.angle = 0;
-            gun.flipX = (kat.pos.x < width() / 2);
-            gun.flipY = false;
         }
-
+    
         kat.pos.x = clamp(kat.pos.x, 0, width() - kat.width);
         kat.pos.y = clamp(kat.pos.y, 0, height() - kat.height);
     });
-
+    
     onUpdate(() => {
-        const direction = vec2(kat.pos.x - skull.pos.x, kat.pos.y - skull.pos.y);
-        const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
-        const normalizedDirection = vec2(direction.x / length, direction.y / length);
-        skull.move(normalizedDirection.scale(enemySpeed));
-    });
-
-    onUpdate(() => {
-        setCamPos(kat.pos.x, kat.pos.y);
+        const enemies = get("enemy");
+        for (let enemy of enemies) {
+            const direction = kat.pos.sub(enemy.pos).unit();
+            enemy.move(direction.scale(enemySpeed));
+        }
+    
+        setCamPos(kat.pos.x, kat.pos.y + height() / 4);
     });
 });
-
+    
 go("game");
