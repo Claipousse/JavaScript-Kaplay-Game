@@ -1,8 +1,6 @@
 import kaplay from "kaplay";
 
 kaplay({
-    width: 2000,
-    height: 2000,
     font: "sproutland",
 });
 
@@ -38,7 +36,7 @@ let shootCooldown = 2;
 let weaponRange = 300;
 
 setLayers(["background", 
-    "playground", 
+    "playground",
     "game", 
     "ui"
 ], "game");
@@ -49,14 +47,14 @@ scene("gameover", () => {
 
     add([
         text("Game Over", { size: 48}),
-        pos(width() / 2, height() / 5),
+        pos(width() / 2, height() / 3),
         anchor("center"),
         layer("ui"),
     ]);
 
     add([
         text("Press R to Restart", { size: 24}),
-        pos(width() / 2, height() / 4),
+        pos(width() / 2, height() / 2),
         anchor("center"),
         layer("ui"),
     ]);
@@ -68,10 +66,25 @@ scene("gameover", () => {
     });
 });
 
+//Game scene
 scene("game", () => {
+    const rectangleWidth = 1300;
+    const rectangleHeight = 1300;
+    const rectanglePosX = (width() - rectangleWidth) / 2;
+    const rectanglePosY = (height() - rectangleHeight) / 2;
+
+    //Playground of the game, player and enemies move there
+    add([rect(rectangleWidth, rectangleHeight), 
+        pos(rectanglePosX, rectanglePosY), 
+        color(0, 0, 200), 
+        layer("playground")]);
+
+    //Background of the playground, nobody can go there
+    add([rect(width(), height()), color(0, 0, 0), layer("background"), fixed()]);
+
     const kat = add([
         sprite("kat"),
-        pos(1000, 100),
+        pos(width() / 2, height() / 2),
         area(),
         body(),
         layer("game"),
@@ -88,8 +101,10 @@ scene("game", () => {
     function spawnEnemy() {
         let spawnPos;
         do {
-            spawnPos = vec2(rand(0, width()), rand(0, height()));
-        } while (kat.pos.dist(spawnPos) < 500);
+            spawnPos = vec2(
+                rand(rectanglePosX, rectanglePosX + rectangleWidth), 
+                rand(rectanglePosY, rectanglePosY + rectangleHeight));
+        } while (kat.pos.dist(spawnPos) < 300);
         
         add([
             sprite("skull"),
@@ -110,7 +125,6 @@ scene("game", () => {
             waveActive = false;
         });
     }
-
     startWave();
 
     function getClosestEnemy() {
@@ -127,9 +141,6 @@ scene("game", () => {
         }
         return closestEnemy;
     }
-
-    add([rect(width(), height()), color(0, 0, 0), layer("background"), fixed()]); //Background of the playground, nobody can go there
-    add([rect(width(), height()), color(0, 0, 200), layer("playground")]); //Playground of the game, player and enemies move there
 
     const hpBarContainer = add([
         rect(200, 20),
@@ -201,7 +212,7 @@ scene("game", () => {
     
             if (dist <= weaponRange && currentTime - lastShotTime >= shootCooldown) {
                 const bullet = add([
-                    rect(10, 5),
+                    circle(7),
                     pos(gun.pos),
                     color(255, 0, 0),
                     layer("game"),
@@ -226,12 +237,13 @@ scene("game", () => {
                 lastShotTime = currentTime;
             }
         } else {
-            gun.pos = kat.pos.add(vec2(30, 0));
+            gun.pos = kat.pos.add(vec2(55, 10));
             gun.angle = 0;
         }
     
-        kat.pos.x = clamp(kat.pos.x, 0, width() - kat.width);
-        kat.pos.y = clamp(kat.pos.y, 0, height() - kat.height);
+        kat.pos.x = clamp(kat.pos.x, rectanglePosX, rectanglePosX + rectangleWidth - kat.width);
+        kat.pos.y = clamp(kat.pos.y, rectanglePosY, rectanglePosY + rectangleHeight - kat.height);
+        
     });
     
     onUpdate(() => {
@@ -240,8 +252,7 @@ scene("game", () => {
             const direction = kat.pos.sub(enemy.pos).unit();
             enemy.move(direction.scale(enemySpeed));
         }
-    
-        setCamPos(kat.pos.x, kat.pos.y + height() / 4);
+        camPos(kat.pos.x, kat.pos.y);
     });
 });
     
