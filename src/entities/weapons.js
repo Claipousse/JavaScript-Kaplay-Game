@@ -30,7 +30,8 @@ export function setupWeaponSystem(player, gun, updateCoinCounter) {
             updateCoinCounter(GAME_CONFIG.coins);
         }
         destroy(coin);
-        //play("coin_pickup"); //Will add sounds later
+        const coinSound = `coin${Math.floor(Math.random() * 4) + 1}`;
+        play(coinSound);
     });
 }
 
@@ -57,7 +58,8 @@ function shootAt(position, direction) {
         const enemyPos = enemy.pos.clone();
         destroy(bullet);
         destroy(enemy);
-        play("skull_death");
+        const skullSound = `skull_death${Math.floor(Math.random() * 3) + 1}`;
+        play(skullSound);
         // Coin spawn at enemy's death position
         spawnCoin(enemyPos);
     });

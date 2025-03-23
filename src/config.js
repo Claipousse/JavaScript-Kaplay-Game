@@ -18,7 +18,7 @@ export const GAME_CONFIG = {
     speed: 500,
     maxHP: 3,
     playerHP: 3,
-    shootCooldown: 2,
+    shootCooldown: 0.1,
     weaponRange: 300,
 
     // Playground dimensions
