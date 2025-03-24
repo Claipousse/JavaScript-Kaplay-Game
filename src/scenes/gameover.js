@@ -1,4 +1,5 @@
 import { resetGameConfig } from "../config.js";
+import { resetUpgrades } from "./shop.js";
 
 export function createGameOverScene() {
     scene("gameover", () => {
@@ -20,6 +21,7 @@ export function createGameOverScene() {
 
         onKeyPress("r", () => {
             resetGameConfig();
+            resetUpgrades();
             go("game");
         });
     });

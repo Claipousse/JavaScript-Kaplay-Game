@@ -18,7 +18,7 @@ export const GAME_CONFIG = {
     speed: 500,
     maxHP: 3,
     playerHP: 3,
-    shootCooldown: 0.1,
+    shootCooldown: 2,
     weaponRange: 300,
 
     // Playground dimensions
@@ -39,4 +39,11 @@ export function resetGameConfig() {
     GAME_CONFIG.waveActive = false;
     GAME_CONFIG.lastShotTime = 0;
     GAME_CONFIG.coins = 0;
+    
+    // Reset upgradable stats to initial values
+    GAME_CONFIG.speed = 500;
+    GAME_CONFIG.maxHP = 3;
+    GAME_CONFIG.playerHP = 3;
+    GAME_CONFIG.shootCooldown = 2;
+    GAME_CONFIG.weaponRange = 300;
 }

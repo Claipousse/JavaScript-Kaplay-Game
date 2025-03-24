@@ -5,7 +5,7 @@ import { setupWeaponSystem } from "../entities/weapons.js";
 import { createUI } from "../ui.js";
 
 export function createGameScene() {
-    scene("game", () => {
+    scene("game", (params = {}) => {
         // Define the dimensions & positions of the playground
         const rectangleWidth = GAME_CONFIG.rectangleWidth;
         const rectangleHeight = GAME_CONFIG.rectangleHeight;
@@ -17,7 +17,7 @@ export function createGameScene() {
         add([rect(width(), height()), color(0, 0, 0), layer("background"), fixed()]);
 
         // Initialisation of the UI elements
-        const { updateHPBar, updateWaveUI, updateCoinCounter } = createUI(GAME_CONFIG.playerHP, GAME_CONFIG.maxHP, GAME_CONFIG.waveNumber, GAME_CONFIG.waveTimeLeft);
+        const { updateHPBar, updateWaveUI, updateCoinCounter } = createUI();
 
         // Creation of the player
         const { kat, gun } = createPlayer(rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateHPBar);
@@ -28,8 +28,27 @@ export function createGameScene() {
         // Setup weapon system
         setupWeaponSystem(kat, gun, updateCoinCounter);
 
-        // Start the wave
-        startWave(kat, rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateWaveUI);
+        // Start the wave or show a "wave starting" message if coming from shop
+        if (params.fromShop) {
+            // Recharge HP to max when starting a new wave
+            GAME_CONFIG.playerHP = GAME_CONFIG.maxHP;
+            updateHPBar(GAME_CONFIG.playerHP, GAME_CONFIG.maxHP);
+
+            const waveStartText = add([
+                text(`WAVE ${GAME_CONFIG.waveNumber} STARTING`, { size: 48 }),
+                pos(width() / 2, height() / 2),
+                anchor("center"),
+                layer("ui"),
+                fixed()
+            ]);
+            
+            wait(2, () => {
+                destroy(waveStartText);
+                startWave(kat, rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateWaveUI);
+            });
+        } else {
+            startWave(kat, rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateWaveUI);
+        }
 
         // Camera follow the player
         onUpdate(() => {
@@ -60,7 +79,21 @@ function startWave(player, rectanglePosX, rectanglePosY, rectangleWidth, rectang
             GAME_CONFIG.waveActive = false;
             timer.cancel();
             GAME_CONFIG.waveNumber++;
-            wait(3, () => startWave(player, rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateWaveUI));
+            
+            // Show "Wave Complete" message
+            const waveCompleteText = add([
+                text("WAVE COMPLETE", { size: 48 }),
+                pos(width() / 2, height() / 2),
+                anchor("center"),
+                layer("ui"),
+                fixed()
+            ]);
+            
+            // Go to shop after a short delay
+            wait(2, () => {
+                destroy(waveCompleteText);
+                go("shop", rectanglePosX, rectanglePosY, rectangleWidth, rectangleHeight, updateWaveUI);
+            });
         }
     });
 }
