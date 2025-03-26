@@ -70,7 +70,6 @@ function spawnCoin(position) {
         sprite("coin"),
         pos(position),
         area(),
-        body(),
         layer("game"),
         "coin"
     ]);

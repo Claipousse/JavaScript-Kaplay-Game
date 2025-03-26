@@ -58,22 +58,25 @@ export function createShopScene() {
             fixed()
         ]);
         
-        // Coins display
-        const coinIcon = add([
-            sprite("coin"),
-            pos(width() / 2 - 100, 170),
-            scale(1.2),
+        // Coins display - centered
+        const coinGroup = add([
+            pos(width() / 2, 170),
             anchor("center"),
-            layer("ui"),
-            fixed()
+            fixed(),
+            layer("ui")
+        ]);
+
+        const coinIcon = coinGroup.add([
+            sprite("coin"),
+            scale(1.2),
+            anchor("right"),
+            pos(-20, 0)
         ]);
         
-        const coinText = add([
+        const coinText = coinGroup.add([
             text(`${GAME_CONFIG.coins}`, { size: 32 }),
-            pos(width() / 2 - 50, 170),
             anchor("left"),
-            layer("ui"),
-            fixed()
+            pos(20, 0)
         ]);
         
         // Create upgrade buttons
@@ -120,7 +123,7 @@ export function createShopScene() {
             // Cost
             add([
                 text(`Cost: ${cost}`, { size: 20 }),
-                pos(width() / 2 + 120, startY + index * buttonSpacing),
+                pos(width() / 2 + 120, startY + index * buttonSpacing + 10),
                 anchor("right"),
                 color(canAfford ? rgb(255, 255, 255) : rgb(255, 0, 0)),
                 layer("ui"),
@@ -128,10 +131,10 @@ export function createShopScene() {
             ]);
         });
         
-        // Start next wave button
+        // Start next wave button positioned at bottom right
         const startButton = add([
             rect(250, 70),
-            pos(width() / 2, startY + upgradeKeys.length * buttonSpacing + 50),
+            pos(width() - 150, height() - 100),
             color(0, 150, 0),
             anchor("center"),
             layer("ui"),
@@ -142,7 +145,7 @@ export function createShopScene() {
         
         add([
             text(`START WAVE ${GAME_CONFIG.waveNumber}`, { size: 24 }),
-            pos(width() / 2, startY + upgradeKeys.length * buttonSpacing + 50),
+            pos(width() - 150, height() - 100),
             anchor("center"),
             layer("ui"),
             fixed()

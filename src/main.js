@@ -7,7 +7,7 @@ import { createShopScene, resetUpgrades } from "./scenes/shop.js";
 
 // Initialisation of Kaplay
 kaplay({
-    font: "sproutland",
+    font: "dreamate",
     title: "Kattack"
 });
 

@@ -18,5 +18,5 @@ export function loadAssets() {
     loadSound("coin4", "sounds/coin-4.mp3");
 
     //Fonts
-    loadFont("sproutland", "fonts/sproutLands.ttf");
+    loadFont("dreamate", "fonts/Dreamate.ttf");
 }
