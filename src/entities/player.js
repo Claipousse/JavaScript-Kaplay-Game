@@ -17,7 +17,7 @@ export function createPlayer(rectanglePosX, rectanglePosY, rectangleWidth, recta
         "gun",
     ]);
 
-    // Managment of player's collisions
+    // Player collision management
     kat.onCollide("enemy", () => {
         if (GAME_CONFIG.canTakeDamage) {
             GAME_CONFIG.playerHP -= GAME_CONFIG.enemyDamage;
@@ -27,7 +27,7 @@ export function createPlayer(rectanglePosX, rectanglePosY, rectangleWidth, recta
             if (GAME_CONFIG.playerHP > 0) {play("player_hurt")};
             flash("#cc425e", 0.2);
 
-            //If the player has 0 HP -> Game Over
+            // If player has 0 HP -> Game Over
             if (GAME_CONFIG.playerHP <= 0) {
                 GAME_CONFIG.isDead = true;
                 destroy(kat);
@@ -36,7 +36,7 @@ export function createPlayer(rectanglePosX, rectanglePosY, rectangleWidth, recta
                 play("explosion");
                 wait(1, () => go("gameover"));
             }
-            //If the player has more than 0 HP -> Invincibility for 1 second 
+            // If player has more than 0 HP -> Invincibility for 1 second
             else {
                 GAME_CONFIG.canTakeDamage = false;
                 wait(1, () => (GAME_CONFIG.canTakeDamage = true));
@@ -44,7 +44,7 @@ export function createPlayer(rectanglePosX, rectanglePosY, rectangleWidth, recta
         }
     });
 
-    // Management of player's movements
+    // Player movement management
     onKeyDown("left", () => { if (!GAME_CONFIG.isDead) kat.move(-GAME_CONFIG.speed, 0); });
     onKeyDown("right", () => { if (!GAME_CONFIG.isDead) kat.move(GAME_CONFIG.speed, 0); });
     onKeyDown("up", () => { if (!GAME_CONFIG.isDead) kat.move(0, -GAME_CONFIG.speed); });
